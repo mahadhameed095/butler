@@ -6,3 +6,5 @@ pandas
 python-multipart
 sqlmodel
 python-dotenv
+requests
+urllib3
