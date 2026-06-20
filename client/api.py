@@ -1,7 +1,7 @@
 import os
 import urllib.parse
 import requests
-from models import App
+from shared.models import App
 
 
 class GithubClient:

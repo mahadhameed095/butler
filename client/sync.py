@@ -1,7 +1,7 @@
 import os
 import tempfile
 import pandas as pd
-from models import App
+from shared.models import App
 from client.api import APIClient, GithubClient
 
 

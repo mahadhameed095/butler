@@ -5,7 +5,7 @@ import shutil
 from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException, Depends
 from sqlmodel import SQLModel, create_engine, Session, select
-from models import ServerState, DeployedApp, RegisterRequest
+from shared.models import ServerState, DeployedApp, RegisterRequest
 from dotenv import load_dotenv; load_dotenv()
 
 app = FastAPI()
