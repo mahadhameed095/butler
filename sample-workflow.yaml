@@ -1,0 +1,33 @@
+name: Butler Deploy
+
+on:
+  workflow_dispatch:  # manual
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Butler repo
+        uses: actions/checkout@v4
+
+      - name: Read manifest and state
+        id: read
+        run: python scripts/check_changes.py
+
+      - name: Deploy changed apps
+        if: steps.read.outputs.has_changes == 'true'
+        run: python scripts/deploy.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+
+      - name: Update state.json
+        run: |
+          git config user.email "butler@github"
+          git config user.name "Butler"
+          git add state.json
+          git commit -m "Update deployment state" || echo "No changes"
+          git push

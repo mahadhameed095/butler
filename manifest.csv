@@ -1,0 +1,3 @@
+repo,branch,route,entry
+https://github.com/mahadhameed095/pathfinder-visualizer,dist,algorithms/pathfinder-visualizer,index.html
+https://github.com/mahadhameed095/sortify,dist,sortify,index.html

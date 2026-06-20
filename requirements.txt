@@ -1,0 +1,8 @@
+click
+pydantic
+fastapi
+uvicorn
+pandas
+python-multipart
+sqlmodel
+python-dotenv
