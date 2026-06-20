@@ -1,45 +1,39 @@
 import os
 import tempfile
-import requests
 import pandas as pd
 from models import App
-from github_service import get_latest_sha_from_github
-from client.api import APIClient
-
-
-def _download_zip(repo_url: str, branch: str) -> str:
-    repo_path = repo_url.removeprefix("https://github.com/")
-    url = f"https://github.com/{repo_path}/archive/refs/heads/{branch}.zip"
-    resp = requests.get(url, stream=True)
-    resp.raise_for_status()
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
-    for chunk in resp.iter_content(chunk_size=8192):
-        tmp.write(chunk)
-    tmp.close()
-    return tmp.name
+from client.api import APIClient, GithubClient
 
 
 def sync():
     manifest = pd.read_csv("manifest.csv")
+    token = os.getenv("GITHUB_TOKEN")
+    if not token:
+        raise RuntimeError("GITHUB_TOKEN env var not set")
 
     api = APIClient()
     state = api.get_state()
     deployed = state["Apps"]
 
-    for _, row in manifest.iterrows():
-        latest_sha = get_latest_sha_from_github(row["Repo_Url"], row["Branch"])
-        existing = deployed.get(row["Repo_Url"])
-        if existing is None or existing["SHA"] != latest_sha:
-            zip_path = _download_zip(row["Repo_Url"], row["Branch"])
-            api.register(
-                app=App(**row.to_dict()),
-                sha=latest_sha,
-                file_path=zip_path,
-            )
-            os.unlink(zip_path)
-            print(f"Deployed {row['Repo_Url']} (SHA: {latest_sha})")
-        else:
-            print(f"{row['Repo_Url']} is up to date.")
+    with GithubClient(token) as gh:
+        for _, row in manifest.iterrows():
+            repo_url = row["Repo_Url"]
+            latest_sha = gh.get_latest_sha(repo_url, row["Branch"])
+            existing = deployed.get(repo_url)
+            if existing is None or existing["SHA"] != latest_sha:
+                zip_bytes = gh.get_zip(repo_url, row["Branch"])
+                tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
+                tmp.write(zip_bytes)
+                tmp.close()
+                api.register(
+                    app=App(**row.to_dict()),
+                    sha=latest_sha,
+                    file_path=tmp.name,
+                )
+                os.unlink(tmp.name)
+                print(f"Deployed {row['Repo_Url']} (SHA: {latest_sha})")
+            else:
+                print(f"{row['Repo_Url']} is up to date.")
 
     for repo_url in deployed:
         if repo_url not in manifest["Repo_Url"].values:
