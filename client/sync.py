@@ -8,11 +8,13 @@ def sync():
     if not token:
         raise RuntimeError("GITHUB_TOKEN env var not set")
 
-    manifest_path = os.getenv("MANIFEST_REPO_PATH")
-    if not manifest_path:
+    manifest_repo_path = os.getenv("MANIFEST_REPO_PATH")
+    if not manifest_repo_path:
         raise RuntimeError("MANIFEST_REPO_PATH env var not set")
 
-    with open(manifest_path, newline="") as f:
+    manifest_file_path = os.path.join(manifest_repo_path, 'manifest.csv')
+
+    with open(manifest_file_path, newline="") as f:
         reader = csv.DictReader(f)
         rows = list(reader)
 
