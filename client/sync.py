@@ -1,44 +1,25 @@
 import os
-import tempfile
-import pandas as pd
-from shared.models import App
-from client.api import APIClient, GithubClient
+import csv
+from client.api import GithubClient
 
 
 def sync():
-    manifest = pd.read_csv("manifest.csv")
     token = os.getenv("GITHUB_TOKEN")
     if not token:
         raise RuntimeError("GITHUB_TOKEN env var not set")
 
-    api = APIClient()
-    state = api.get_state()
-    deployed = state["Apps"]
+    manifest_path = os.getenv("MANIFEST_REPO_PATH")
+    if not manifest_path:
+        raise RuntimeError("MANIFEST_REPO_PATH env var not set")
+
+    with open(manifest_path, newline="") as f:
+        reader = csv.DictReader(f)
+        rows = list(reader)
 
     with GithubClient(token) as gh:
-        for _, row in manifest.iterrows():
-            repo_url = row["Repo_Url"]
-            latest_sha = gh.get_latest_sha(repo_url, row["Branch"])
-            existing = deployed.get(repo_url)
-            if existing is None or existing["SHA"] != latest_sha:
-                zip_bytes = gh.get_zip(repo_url, row["Branch"])
-                tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
-                tmp.write(zip_bytes)
-                tmp.close()
-                api.register(
-                    app=App(**row.to_dict()),
-                    sha=latest_sha,
-                    file_path=tmp.name,
-                )
-                os.unlink(tmp.name)
-                print(f"Deployed {row['Repo_Url']} (SHA: {latest_sha})")
-            else:
-                print(f"{row['Repo_Url']} is up to date.")
-
-    for repo_url in deployed:
-        if repo_url not in manifest["Repo_Url"].values:
-            api.delete(repo_url)
-            print(f"Removed {repo_url}")
+        for row in rows:
+            sha = gh.get_latest_sha(row["Repo_Url"], row["Branch"])
+            print(f"{row['Repo_Url']}  {sha[:12]}")
 
 
 if __name__ == "__main__":

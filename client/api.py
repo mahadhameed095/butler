@@ -48,7 +48,7 @@ class GithubClient:
 
 class APIClient:
     def __init__(self, base_url: str = None):
-        self.base_url = (base_url or os.getenv("SERVER_URL", "http://localhost:8000")).rstrip("/")
+        self.base_url = base_url
 
     def get_state(self) -> dict:
         resp = requests.get(f"{self.base_url}/state")

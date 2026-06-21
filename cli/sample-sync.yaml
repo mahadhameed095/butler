@@ -1,0 +1,27 @@
+name: Butler Sync
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout manifest repo
+        uses: actions/checkout@v4
+        with:
+          path: manifest
+
+      - name: Clone Butler
+        run: git clone https://github.com/mahadhameed095/butler.git
+
+      - name: Install Butler
+        run: pip install -e butler/
+
+      - name: Run client
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MANIFEST_REPO_PATH: manifest
+        run: python butler/client/sync.py
