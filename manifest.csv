@@ -1,3 +1,0 @@
-Repo_Url,Server_Path,Route,Branch,Entry
-https://github.com/mahadhameed095/pathfinder-visualizer,./deployments,algorithms/pathfinder-visualizer,dist,index.html
-https://github.com/mahadhameed095/sortify,./deployments,sortify,dist,index.html

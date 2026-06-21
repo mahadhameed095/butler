@@ -1,25 +1,39 @@
 import os
-import tempfile
+import csv
+import json
+import subprocess
 from shared.models import App
-from client.api import APIClient, GithubClient
+
+BASE = os.path.dirname(os.path.dirname(__file__))
+CONFIG_PATH = os.path.join(BASE, "config.json")
 
 
-def add(repo_url, server_path, route, branch, entry, sha):
-    token = os.getenv("GITHUB_TOKEN")
-    if not token:
-        raise RuntimeError("GITHUB_TOKEN env var not set")
+def add(app: App):
+    if not os.path.exists(CONFIG_PATH):
+        raise RuntimeError("No manifest repo connected")
 
-    api = APIClient()
-    with GithubClient(token) as gh:
-        sha = sha or gh.get_latest_sha(repo_url, branch)
-        zip_bytes = gh.get_zip(repo_url, branch)
+    with open(CONFIG_PATH) as f:
+        config = json.load(f)
 
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
-    tmp.write(zip_bytes)
-    tmp.close()
+    repo_url = config["repo_url"]
+    dest = os.path.join(BASE, repo_url.rstrip("/").removesuffix(".git").rsplit("/", 1)[-1])
 
-    app = App(Repo_Url=repo_url, Server_Path=server_path,
-              Route=route, Branch=branch, Entry=entry)
-    result = api.register(app=app, sha=sha, file_path=tmp.name)
-    os.unlink(tmp.name)
-    return result
+    manifest_path = os.path.join(dest, "manifest.csv")
+    apps = []
+    if os.path.exists(manifest_path):
+        with open(manifest_path, newline="") as f:
+            reader = csv.DictReader(f)
+            apps = [App(**row) for row in reader]
+
+    apps.append(app)
+
+    with open(manifest_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=App.model_fields.keys())
+        writer.writeheader()
+        writer.writerows(a.model_dump() for a in apps)
+
+    subprocess.run(["git", "add", "manifest.csv"], cwd=dest, check=True)
+    subprocess.run(["git", "commit", "-m", f"[cli:add] {app.Repo_Url} | {app.Branch}"], cwd=dest, check=True)
+    subprocess.run(["git", "push"], cwd=dest, check=True)
+
+    return f"Added {app.Repo_Url} to manifest"

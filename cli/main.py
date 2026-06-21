@@ -1,8 +1,9 @@
 import click
+from shared.models import App
 from cli.commands.init import init as _init
 from cli.commands.add import add as _add
 from cli.commands.list import list_apps as _list
-from cli.commands.update import update as _update
+from cli.commands.update import update as _update, get_app as _get_app
 from cli.commands.remove import remove as _remove
 
 
@@ -12,48 +13,69 @@ def cli():
 
 
 @cli.command()
-@click.argument("repo_url")
-@click.argument("vm_host")
-@click.option("--path", default=None, help="clone destination")
-def init(repo_url, vm_host, path):
-    click.echo(_init(repo_url, vm_host, path))
+def init():
+    repo_url = click.prompt("Repo for butler manifest")
+    click.echo(_init(repo_url))
 
 
 @cli.command()
-@click.option("--repo-url", required=True)
-@click.option("--server-path", required=True)
-@click.option("--route", required=True)
-@click.option("--branch", default="main")
-@click.option("--entry", default="index.html")
-@click.option("--sha", default=None)
-def add(repo_url, server_path, route, branch, entry, sha):
-    click.echo(_add(repo_url, server_path, route, branch, entry, sha))
+@click.option("--repo-url", default=None)
+@click.option("--server-path", default=None)
+@click.option("--route", default=None)
+@click.option("--branch", default=None)
+@click.option("--entry", default=None)
+def add(repo_url, server_path, route, branch, entry):
+    if repo_url is None:
+        repo_url = click.prompt("Repo URL")
+    if server_path is None:
+        basename = repo_url.rstrip("/").removesuffix(".git").rsplit("/", 1)[-1]
+        server_path = click.prompt("Server path", default=f"~/.local/{basename}")
+    if route is None:
+        route = click.prompt("Route")
+    if branch is None:
+        branch = click.prompt("Branch", default="dist")
+    if entry is None:
+        entry = click.prompt("Entry", default="index.html")
+    app = App(Repo_Url=repo_url, Server_Path=server_path, Route=route, Branch=branch, Entry=entry)
+    click.echo(_add(app))
+
+
+@cli.command("list")
+def list_cmd():
+    click.echo(_list())
 
 
 @cli.command()
-def list_apps():
-    apps = _list()
-    if not apps:
-        click.echo("No apps deployed.")
-        return
-    for url, info in apps.items():
-        click.echo(f"{url}  [{info['SHA'][:7]}]  route={info['Route']}")
+@click.option("--repo-url", default=None)
+@click.option("--server-path", default=None)
+@click.option("--route", default=None)
+@click.option("--branch", default=None)
+@click.option("--entry", default=None)
+def update(repo_url, server_path, route, branch, entry):
+    if repo_url is None:
+        repo_url = click.prompt("Repo URL")
+
+    current = _get_app(repo_url)
+    if current is None:
+        raise RuntimeError(f"{repo_url} not found in manifest. Use add instead.")
+
+    if server_path is None:
+        server_path = click.prompt("Server path", default=current.Server_Path)
+    if route is None:
+        route = click.prompt("Route", default=current.Route)
+    if branch is None:
+        branch = click.prompt("Branch", default=current.Branch)
+    if entry is None:
+        entry = click.prompt("Entry", default=current.Entry)
+
+    click.echo(_update(repo_url, server_path, route, branch, entry))
 
 
 @cli.command()
-@click.option("--repo-url", required=True)
-@click.option("--server-path", required=True)
-@click.option("--route", required=True)
-@click.option("--branch", default="main")
-@click.option("--entry", default="index.html")
-@click.option("--sha", default=None)
-def update(repo_url, server_path, route, branch, entry, sha):
-    click.echo(_update(repo_url, server_path, route, branch, entry, sha))
-
-
-@cli.command()
-@click.argument("repo_url")
+@click.option("--repo-url", default=None)
 def remove(repo_url):
+    if repo_url is None:
+        repo_url = click.prompt("Repo URL")
     click.echo(_remove(repo_url))
 
 

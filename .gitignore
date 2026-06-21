@@ -14,3 +14,4 @@ venv/
 ./apps
 ./butler-manifest
 cli/config.json
+test.py
