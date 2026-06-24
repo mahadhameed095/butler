@@ -1,5 +1,5 @@
 import click
-from shared.models import App, GithubRepoURL
+from shared.models import App
 from cli.ManifestManager import ManifestManager
 from cli.pydantic_click import pydantic_options, make_optional
 

@@ -6,7 +6,7 @@ from cli.ManifestManager import ManifestManager
 
 
 @click.command()
-def list_cmd(manifest):
+def list_cmd():
     manifest = ManifestManager()
     if not manifest.get_apps():
         click.echo("No apps deployed.")
