@@ -2,7 +2,7 @@ import re
 from typing import Any, Dict, Annotated
 from pathlib import Path
 from datetime import datetime
-from pydantic import BaseModel, GetCoreSchemaHandler, AfterValidator
+from pydantic import BaseModel, GetCoreSchemaHandler, AfterValidator, Field as PydanticField
 from pydantic_core import core_schema
 from sqlalchemy import event
 from sqlmodel import SQLModel, Field
@@ -78,10 +78,22 @@ Route = Annotated[str, AfterValidator(_validate_route)]
 
 class App(BaseModel):
     Repo_URL: GithubRepoURL
-    Deploy_Dir: SafePath
-    Route: Route
-    Branch: str
-    Entry_File: SafePath
+    Deploy_Dir: SafePath = PydanticField(json_schema_extra={
+        "prompt": "Deploy dir",
+        "default": lambda repo_url: f"~/.local/{GithubRepoURL(repo_url).repo}",
+    })
+    Route: Route = PydanticField(json_schema_extra={
+        "prompt": "Route",
+        "default": None,
+    })
+    Branch: str = PydanticField(json_schema_extra={
+        "prompt": "Branch",
+        "default": "dist",
+    })
+    Entry_File: SafePath = PydanticField(json_schema_extra={
+        "prompt": "Entry file",
+        "default": "index.html",
+    })
 
 
 class DeployedApp(App, SQLModel, table=True):

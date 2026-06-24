@@ -2,14 +2,23 @@ import os
 import json
 import shutil
 from pathlib import Path
-from shared.models import GithubRepoURL
-from cli.lib import ensure_manifest, CONFIG_PATH, BASE
 import subprocess
+import click
+from shared.models import GithubRepoURL
+from cli.constants import CONFIG_PATH, BASE
+from cli.ManifestManager import ManifestManager
 
-def init(repo_url: GithubRepoURL):
+
+@click.command()
+@click.option("--repo-url", default=None)
+def init(repo_url):
+    repo_url = repo_url or click.prompt("Repo for butler manifest")
+    repo_url = GithubRepoURL(repo_url)
+
     if os.path.exists(CONFIG_PATH):
         with open(CONFIG_PATH) as f:
-            return f"Already connected to {json.load(f)['repo_url']}"
+            click.echo(f"Already connected to {json.load(f)['repo_url']}")
+            return
 
     dest = Path(BASE) / repo_url.repo
     if dest.exists():
@@ -20,8 +29,10 @@ def init(repo_url: GithubRepoURL):
     with open(CONFIG_PATH, "w") as f:
         json.dump({"repo_url": str(repo_url)}, f, indent=2)
 
-    ctx = ensure_manifest()
+    manifest = ManifestManager()
+    apps = manifest.get_apps()
 
-    if ctx.apps:
-        return f"Connected to {repo_url}. Loaded {len(ctx.apps)} app(s) from manifest."
-    return f"Connected to {repo_url}."
+    if apps:
+        click.echo(f"Connected to {repo_url}. Loaded {len(apps)} app(s) from manifest.")
+    else:
+        click.echo(f"Connected to {repo_url}.")

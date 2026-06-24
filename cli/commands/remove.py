@@ -1,10 +1,15 @@
-from shared.models import App
-from cli.lib import with_manifest
+import click
+from cli.ManifestManager import ManifestManager
 
 
-@with_manifest
-def remove(ctx, repo_url):
-    filtered = [a for a in ctx.apps if a.Repo_URL != repo_url]
-    if len(filtered) == len(ctx.apps):
-        return f"App {repo_url} not found in manifest"
-    return filtered, f"[cli:remove] {repo_url}"
+@click.command()
+@click.option("--repo-url", default=None)
+def remove(repo_url):
+    manifest = ManifestManager()
+    repo_url = repo_url or click.prompt("Repo URL")
+    try:
+        manifest.remove_app(repo_url)
+    except RuntimeError as e:
+        raise click.ClickException(str(e))
+    manifest.commit(f"[cli:remove] {repo_url}")
+    click.echo(f"Removed {repo_url}")
