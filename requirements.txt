@@ -6,6 +6,7 @@ uvicorn
 pandas
 python-multipart
 tinydb
+sqlmodel
 python-dotenv
 requests
 urllib3

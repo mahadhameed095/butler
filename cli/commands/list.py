@@ -1,40 +1,18 @@
-import os
-import csv
-import json
 from rich.console import Console
 from rich.table import Table
-from shared.utils import parse_github_url
-
-BASE = os.path.dirname(os.path.dirname(__file__))
-CONFIG_PATH = os.path.join(BASE, "config.json")
+from shared.models import App
+from cli.shared import with_manifest
 
 
-def list_apps():
-    if not os.path.exists(CONFIG_PATH):
+@with_manifest
+def list_apps(apps, dest):
+    if not apps:
         return "No apps deployed."
-
-    with open(CONFIG_PATH) as f:
-        config = json.load(f)
-
-    dest = os.path.join(BASE, parse_github_url(config["repo_url"]).repo)
-    manifest_path = os.path.join(dest, "manifest.csv")
-
-    if not os.path.exists(manifest_path):
-        return "No apps deployed."
-
-    with open(manifest_path, newline="") as f:
-        reader = csv.DictReader(f)
-        rows = list(reader)
-
-    if not rows:
-        return "No apps deployed."
-
     table = Table()
-    for header in rows[0].keys():
+    for header in App.model_fields.keys():
         table.add_column(header)
-    for r in rows:
-        table.add_row(*r.values())
-
+    for a in apps:
+        table.add_row(*[str(getattr(a, f)) for f in App.model_fields.keys()])
     console = Console()
     with console.capture() as capture:
         console.print(table)

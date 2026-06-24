@@ -2,15 +2,14 @@ import os
 import csv
 import json
 import subprocess
-from shared.models import App
-from giturlparse import GitUrlParsed
+from shared.models import App, GithubRepoURL
 
 BASE = os.path.dirname(os.path.dirname(__file__))
 CONFIG_PATH = os.path.join(BASE, "config.json")
 SAMPLE_SYNC = os.path.join(BASE, "sample-sync.yaml")
 
 
-def init(repo_url : GitUrlParsed):
+def init(repo_url: GithubRepoURL):
     if os.path.exists(CONFIG_PATH):
         with open(CONFIG_PATH) as f:
             config = json.load(f)
