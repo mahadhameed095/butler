@@ -3,6 +3,6 @@ from cli.shared import with_manifest
 
 
 @with_manifest
-def add(apps, dest, app: App):
+def add(apps, app: App):
     apps.append(app)
     return apps, f"[cli:add] {app.Repo_URL} | {app.Branch}"

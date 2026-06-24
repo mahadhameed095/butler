@@ -5,7 +5,7 @@ from cli.shared import with_manifest
 
 
 @with_manifest
-def list_apps(apps, dest):
+def list_apps(apps):
     if not apps:
         return "No apps deployed."
     table = Table()

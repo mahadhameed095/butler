@@ -46,7 +46,7 @@ def with_manifest(f):
                 reader = csv.DictReader(fh)
                 apps = [App(**row) for row in reader]
 
-        result = f(apps, dest, *args, **kwargs)
+        result = f(apps, *args, **kwargs)
 
         if isinstance(result, tuple) and len(result) == 2:
             new_apps, commit_msg = result

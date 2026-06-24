@@ -19,7 +19,7 @@ def get_app(repo_url):
 
 
 @with_manifest
-def update(apps, dest, new_app: App):
+def update(apps, new_app: App):
     repo_url = new_app.Repo_URL
     idx = None
     for i, a in enumerate(apps):
