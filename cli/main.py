@@ -1,6 +1,6 @@
 import click
 from shared.models import App
-from cli.shared import app_options, prompt_app_fields, _map_kwargs
+from cli.lib import app_options, prompt_app_fields, _map_kwargs
 from cli.commands.init import init as _init
 from cli.commands.add import add as _add
 from cli.commands.list import list_apps as _list

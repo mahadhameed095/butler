@@ -1,35 +1,27 @@
 from shared.models import App
-from cli.shared import with_manifest, load_config, GithubRepoURL
-import os
+from cli.lib import with_manifest, ensure_manifest
 
 
 def get_app(repo_url):
-    config = load_config()
-    dest = os.path.join(os.path.dirname(os.path.dirname(__file__)), GithubRepoURL(config["repo_url"]).repo)
-    manifest_path = os.path.join(dest, "manifest.csv")
-    if not os.path.exists(manifest_path):
-        raise FileNotFoundError("manifest.csv not found")
-    with open(manifest_path, newline="") as f:
-        from csv import DictReader
-        for row in DictReader(f):
-            app = App(**row)
-            if app.Repo_URL == repo_url:
-                return app
+    ctx = ensure_manifest()
+    for app in ctx.apps:
+        if app.Repo_URL == repo_url:
+            return app
     return None
 
 
 @with_manifest
-def update(apps, new_app: App):
+def update(ctx, new_app: App):
     repo_url = new_app.Repo_URL
     idx = None
-    for i, a in enumerate(apps):
+    for i, a in enumerate(ctx.apps):
         if a.Repo_URL == repo_url:
             idx = i
             break
     if idx is None:
         raise RuntimeError(f"{repo_url} not found in manifest. Use add instead.")
 
-    current = apps[idx]
+    current = ctx.apps[idx]
     changes = []
     if current.Deploy_Dir != new_app.Deploy_Dir:
         changes.append(("deploy_dir", current.Deploy_Dir, new_app.Deploy_Dir))
@@ -47,6 +39,6 @@ def update(apps, new_app: App):
     if not changes:
         return "No changes detected"
 
-    apps[idx] = new_app
+    ctx.apps[idx] = new_app
     param_names = [p for p, _, _ in changes]
-    return apps, f"[cli:update] {repo_url} | [{', '.join(param_names)}]"
+    return ctx.apps, f"[cli:update] {repo_url} | [{', '.join(param_names)}]"
