@@ -3,6 +3,7 @@ import csv
 import json
 import subprocess
 from shared.models import App
+from shared.utils import parse_github_url
 
 BASE = os.path.dirname(os.path.dirname(__file__))
 CONFIG_PATH = os.path.join(BASE, "config.json")
@@ -11,7 +12,7 @@ CONFIG_PATH = os.path.join(BASE, "config.json")
 def _get_manifest_path():
     with open(CONFIG_PATH) as f:
         config = json.load(f)
-    dest = os.path.join(BASE, config["repo_url"].rstrip("/").removesuffix(".git").rsplit("/", 1)[-1])
+    dest = os.path.join(BASE, parse_github_url(config["repo_url"]).repo)
     return os.path.join(dest, "manifest.csv"), dest
 
 

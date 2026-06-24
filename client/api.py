@@ -2,6 +2,7 @@ import os
 import urllib.parse
 import requests
 from shared.models import App
+from shared.utils import parse_github_url
 
 
 class GithubClient:
@@ -17,9 +18,8 @@ class GithubClient:
 
     @staticmethod
     def _parse_repo(repo: str) -> tuple[str, str]:
-        repo = repo.rstrip("/").removeprefix("https://github.com/")
-        owner, name = repo.split("/")
-        return owner, name
+        p = parse_github_url(repo)
+        return p.owner, p.name
 
     def get_latest_sha(self, repo: str, branch: str) -> str:
         owner, name = self._parse_repo(repo)

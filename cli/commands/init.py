@@ -3,19 +3,20 @@ import csv
 import json
 import subprocess
 from shared.models import App
+from giturlparse import GitUrlParsed
 
 BASE = os.path.dirname(os.path.dirname(__file__))
 CONFIG_PATH = os.path.join(BASE, "config.json")
 SAMPLE_SYNC = os.path.join(BASE, "sample-sync.yaml")
 
 
-def init(repo_url):
+def init(repo_url : GitUrlParsed):
     if os.path.exists(CONFIG_PATH):
         with open(CONFIG_PATH) as f:
             config = json.load(f)
         return f"Already connected to {config['repo_url']}"
 
-    dest = os.path.join(BASE, repo_url.rstrip("/").removesuffix(".git").rsplit("/", 1)[-1])
+    dest = os.path.join(BASE, repo_url.repo)
     subprocess.run(["git", "clone", repo_url, dest], check=True)
 
     manifest_path = os.path.join(dest, "manifest.csv")

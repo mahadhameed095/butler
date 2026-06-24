@@ -3,6 +3,7 @@ import csv
 import json
 import subprocess
 from shared.models import App
+from shared.utils import parse_github_url
 
 BASE = os.path.dirname(os.path.dirname(__file__))
 CONFIG_PATH = os.path.join(BASE, "config.json")
@@ -16,7 +17,7 @@ def add(app: App):
         config = json.load(f)
 
     repo_url = config["repo_url"]
-    dest = os.path.join(BASE, repo_url.rstrip("/").removesuffix(".git").rsplit("/", 1)[-1])
+    dest = os.path.join(BASE, parse_github_url(repo_url).repo)
 
     manifest_path = os.path.join(dest, "manifest.csv")
     apps = []

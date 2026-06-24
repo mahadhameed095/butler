@@ -3,6 +3,7 @@ import csv
 import json
 import subprocess
 from shared.models import App
+from shared.utils import parse_github_url
 
 BASE = os.path.dirname(os.path.dirname(__file__))
 CONFIG_PATH = os.path.join(BASE, "config.json")
@@ -15,7 +16,7 @@ def remove(repo_url):
     with open(CONFIG_PATH) as f:
         config = json.load(f)
 
-    dest = os.path.join(BASE, config["repo_url"].rstrip("/").removesuffix(".git").rsplit("/", 1)[-1])
+    dest = os.path.join(BASE, parse_github_url(config["repo_url"]).repo)
 
     manifest_path = os.path.join(dest, "manifest.csv")
     if not os.path.exists(manifest_path):

@@ -5,8 +5,9 @@ fastapi
 uvicorn
 pandas
 python-multipart
-sqlmodel
+tinydb
 python-dotenv
 requests
 urllib3
 rich
+giturlparse
