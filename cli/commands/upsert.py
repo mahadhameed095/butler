@@ -1,7 +1,7 @@
 import click
 from shared.models import App, GithubRepoURL
 from cli.ManifestManager import ManifestManager
-from pydantic_click import pydantic_options, make_optional
+from cli.pydantic_click import pydantic_options, make_optional
 
 PartialApp = make_optional(App)
 

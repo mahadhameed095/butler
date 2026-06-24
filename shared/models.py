@@ -73,7 +73,7 @@ def _validate_route(v: str) -> str:
         raise ValueError(f"Invalid route: '{v}'")
     return v
 
-Route = Annotated[str, AfterValidator(_validate_route)]
+RouteType = Annotated[str, AfterValidator(_validate_route)]
 
 
 class App(BaseModel):
@@ -82,7 +82,7 @@ class App(BaseModel):
         "prompt": "Deploy dir",
         "default": lambda repo_url: f"~/.local/{GithubRepoURL(repo_url).repo}",
     })
-    Route: Route = PydanticField(json_schema_extra={
+    Route: RouteType = PydanticField(json_schema_extra={
         "prompt": "Route",
         "default": None,
     })
