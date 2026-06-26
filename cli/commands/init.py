@@ -6,11 +6,12 @@ import subprocess
 import click
 from shared.models import GithubRepoURL
 from cli.constants import CONFIG_PATH, BASE
-from cli.ManifestManager import ManifestManager
+from cli.ManifestManager import ManifestManager, handle_errors
 
 
 @click.command()
 @click.option("--repo-url", default=None)
+@handle_errors
 def init(repo_url):
     repo_url = repo_url or click.prompt("Repo for butler manifest")
     repo_url = GithubRepoURL(repo_url)

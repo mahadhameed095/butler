@@ -2,10 +2,11 @@ import click
 from rich.console import Console
 from rich.table import Table
 from shared.models import App
-from cli.ManifestManager import ManifestManager
+from cli.ManifestManager import ManifestManager, handle_errors
 
 
 @click.command()
+@handle_errors
 def list_cmd():
     manifest = ManifestManager()
     if not manifest.get_apps():

@@ -88,15 +88,25 @@ class ManifestManager:
 
     # --- Git ---
 
+    def _git(self, *args, check=True, capture_output=False):
+        try:
+            return subprocess.run(
+                ["git", *args], cwd=self.dest,
+                check=check, capture_output=capture_output, text=True
+            )
+        except subprocess.CalledProcessError as e:
+            msg = e.stderr.strip() if e.stderr else str(e)
+            raise RuntimeError(f"git {' '.join(args)} failed: {msg}")
+
     def _git_commit(self, *files, msg: str, push: bool = False) -> None:
         for f in files:
-            subprocess.run(["git", "add", f], cwd=self.dest, check=True)
-        subprocess.run(["git", "commit", "-m", msg], cwd=self.dest, check=True)
+            self._git("add", f)
+        self._git("commit", "-m", msg)
         if push:
-            subprocess.run(["git", "push"], cwd=self.dest, check=True)
+            self._git("push")
 
     def push(self) -> None:
-        subprocess.run(["git", "push"], cwd=self.dest, check=True)
+        self._git("push")
 
     # --- CRUD ---
 
@@ -139,3 +149,15 @@ class ManifestManager:
         def wrapper(*args, **kwargs):
             return f(ManifestManager(), *args, **kwargs)
         return wrapper
+
+
+def handle_errors(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except click.ClickException:
+            raise
+        except (RuntimeError, ValueError, subprocess.CalledProcessError) as e:
+            raise click.ClickException(str(e))
+    return wrapper

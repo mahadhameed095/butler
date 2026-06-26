@@ -1,6 +1,6 @@
 import click
 from shared.models import App
-from cli.ManifestManager import ManifestManager
+from cli.ManifestManager import ManifestManager, handle_errors
 from cli.pydantic_click import pydantic_options, make_optional
 
 PartialApp = make_optional(App)
@@ -19,15 +19,22 @@ def _prompt_fields(repo_url: str, d: App | None) -> dict:
         if field_name == "Repo_URL":
             fields["Repo_URL"] = repo_url
             continue
-        meta = field_info.json_schema_extra
-        raw_default = meta["default"]
-        resolved = raw_default(repo_url) if callable(raw_default) else (str(getattr(d, field_name)) if d else raw_default)
-        fields[field_name] = click.prompt(meta["prompt"], default=resolved)
+        meta = field_info.json_schema_extra or {}
+        prompt = meta.get("prompt", field_name.replace("_", " ").title())
+        raw_default = meta.get("default")
+        if callable(raw_default):
+            resolved = raw_default(repo_url)
+        elif d:
+            resolved = str(getattr(d, field_name))
+        else:
+            resolved = raw_default
+        fields[field_name] = click.prompt(prompt, default=resolved)
     return fields
 
 
 @click.command()
 @pydantic_options(PartialApp)
+@handle_errors
 def upsert(app: PartialApp):
     manifest = ManifestManager()
     repo_url = str(app.Repo_URL) if app.Repo_URL else click.prompt("Repo URL")
