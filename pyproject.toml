@@ -5,10 +5,31 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "butler"
 version = "0.1.0"
-dynamic = ["dependencies"]
+dependencies = [
+    "pydantic",
+    "giturlparse",
+]
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+[project.optional-dependencies]
+cli = [
+    "click",
+    "pyyaml",
+    "paramiko",
+]
+server = [
+    "fastapi",
+    "uvicorn",
+    "python-multipart",
+    "sqlmodel",
+    "python-dotenv",
+]
+client = [
+    "requests",
+    "urllib3",
+]
+
+[project.scripts]
+butler = "cli.main:cli"
 
 [tool.setuptools.packages.find]
-include = ["client", "shared"]
+include = ["cli", "cli.*", "client", "client.*", "server", "server.*", "shared", "shared.*"]
