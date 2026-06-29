@@ -148,7 +148,7 @@ def _pull_with_stash(repo_path: Path) -> None:
     stashes = git(["stash", "list"], cwd=repo_path)
     if stashes:
         raise click.ClickException(
-            "Existing git stashes detected. Resolve them manually before running 'butler commit'."
+            "Existing git stashes detected. Resolve them manually before running 'butler manifest commit'."
         )
 
     dirty = git(["status", "--porcelain"], cwd=repo_path)
@@ -156,7 +156,7 @@ def _pull_with_stash(repo_path: Path) -> None:
     if non_manifest:
         raise click.ClickException(
             "Unexpected local changes detected outside manifest.yaml. "
-            "Resolve them manually before running 'butler commit'."
+            "Resolve them manually before running 'butler manifest commit'."
         )
 
     has_manifest_changes = any("manifest.yaml" in l for l in dirty.splitlines())
@@ -175,14 +175,14 @@ def _pull_with_stash(repo_path: Path) -> None:
             remaining = git(["diff", "--name-only", "--diff-filter=U"], cwd=repo_path)
             if remaining:
                 raise click.ClickException(
-                    "Conflicts remain unresolved. Fix them and run 'butler commit' again."
+                    "Conflicts remain unresolved. Fix them and run 'butler manifest commit' again."
                 )
             git(["stash", "drop"], cwd=repo_path)
 
 
 # --- Command ---
 
-@click.command()
+@click.command("commit")
 @handle_errors
 @with_active_manifest
 def commit(entry: ManifestRepo):
@@ -206,13 +206,13 @@ def commit(entry: ManifestRepo):
     # step 3: validate sync.yaml exists
     if not workflow_path.exists():
         raise click.ClickException(
-            "sync.yaml not found. Run 'butler init' to set up the workflow."
+            "sync.yaml not found. Run 'butler manifest setup' to set up the workflow."
         )
 
     # step 4: validate manifest.yaml exists
     if not manifest_path.exists():
         raise click.ClickException(
-            "manifest.yaml not found. Run 'butler init' to set up the manifest."
+            "manifest.yaml not found. Run 'butler manifest setup' to set up the manifest."
         )
 
     # step 5: validate app entries
@@ -220,7 +220,7 @@ def commit(entry: ManifestRepo):
     new_apps, new_errors = _validate_apps(raw_new, label="new")
     if new_errors:
         raise click.ClickException(
-            "manifest.yaml contains invalid entries. Run 'butler manifest' to fix them:\n"
+            "manifest.yaml contains invalid entries. Run 'butler manifest edit' to fix them:\n"
             + "\n".join(new_errors)
         )
 
@@ -228,7 +228,7 @@ def commit(entry: ManifestRepo):
     cross_errors = _cross_validate(new_apps)
     if cross_errors:
         raise click.ClickException(
-            "manifest.yaml has conflicting entries. Run 'butler manifest' to fix them:\n"
+            "manifest.yaml has conflicting entries. Run 'butler manifest edit' to fix them:\n"
             + "\n".join(cross_errors)
         )
 

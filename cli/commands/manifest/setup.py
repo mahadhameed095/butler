@@ -2,12 +2,13 @@ import shutil
 from pathlib import Path
 import click
 import yaml
+import os
 from shared.models import GithubRepoURL, SafePath, App
 from shared.utils import git, staged_directory
 from cli.config import ButlerConfig, ManifestRepo
 from cli.utils import handle_errors
 from cli.constants import DEFAULT_CLONE_DIR, SAMPLE_SYNC
-import os
+
 
 def _ensure_workflow(repo_path: Path) -> str | None:
     workflow_path = repo_path / ".github" / "workflows" / "sync.yaml"
@@ -31,12 +32,12 @@ def _ensure_manifest(repo_path: Path) -> str | None:
     return None
 
 
-@click.command()
+@click.command("setup")
 @click.argument("repo")
 @click.option("--clone-dir", default=DEFAULT_CLONE_DIR)
 @click.option("--force", is_flag=True, default=False)
 @handle_errors
-def init(repo, clone_dir, force):
+def setup(repo, clone_dir, force):
     repo_url = GithubRepoURL(repo)
     clone_dir = SafePath(clone_dir)
     dest = clone_dir / repo_url.repo
@@ -73,4 +74,4 @@ def init(repo, clone_dir, force):
     click.echo(f"Connected to {repo_url} at {dest}.")
     for action in actions:
         click.echo(f"  {action}")
-    click.echo("Run 'butler manifest' to edit your apps, then 'butler commit' to deploy.")
+    click.echo("Run 'butler manifest edit' to edit your apps, then 'butler manifest commit' to deploy.")

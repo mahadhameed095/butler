@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional
 import click
 from pydantic import BaseModel
-from cli.constants import CONFIG_PATH
+from cli.constants import CONFIG_PATH, DEFAULT_BUTLER_SERVER_CLONE_DIR
 from shared.models import GithubRepoURL, SafePath
 
 
@@ -15,10 +15,18 @@ class ManifestRepo(BaseModel):
     def manifest_file_path(self) -> Path:
         return self.clone_dir_path / "manifest.yaml"
 
+class ServerConfig(BaseModel):
+    name: str
+    host: str
+    user: str              
+    ssh_key_path: Path
+    port: int = 22
+    clone_dir: str = DEFAULT_BUTLER_SERVER_CLONE_DIR
 
 class ButlerConfig(BaseModel):
     active_repo: Optional[str] = None
     manifests: list[ManifestRepo] = []
+    server_config : Optional[ServerConfig] = None
 
     @staticmethod
     def load() -> "ButlerConfig":
@@ -28,6 +36,7 @@ class ButlerConfig(BaseModel):
             return ButlerConfig.model_validate(json.load(f))
 
     def save(self) -> None:
+        Path(CONFIG_PATH).parent.mkdir(parents=True, exist_ok=True)
         with open(CONFIG_PATH, "w") as f:
             json.dump(self.model_dump(mode="json"), f, indent=2)
 
